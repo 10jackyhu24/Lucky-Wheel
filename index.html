@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幸運轉盤</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="result-panel" aria-live="polite">
+      <span class="result-label">選中的選項</span>
+      <strong id="resultText">尚未開始</strong>
+    </section>
+
+    <section class="wheel-area" aria-label="幸運轉盤">
+      <div class="wheel-wrap">
+        <canvas id="wheelCanvas" width="640" height="640"></canvas>
+        <div id="pointer" class="pointer" aria-hidden="true">👇</div>
+      </div>
+    </section>
+
+    <button id="spinButton" class="spin-button" type="button">開始</button>
+
+    <label class="input-block" for="optionsInput">
+      <div>
+        <span>輪盤選項</span>
+        <button type="button" data-preset="lunch">中午</button>
+        <button type="button" data-preset="dinner">晚上</button>
+      </div>
+      <textarea id="optionsInput" rows="4" spellcheck="false"></textarea>
+    </label>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
