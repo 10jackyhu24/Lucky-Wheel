@@ -17,6 +17,8 @@ const palette = [
 ];
 
 const POINTER_SPEED = 0.7;
+const STOP_JUMP_CHANCE = 0.35;
+const QUICK_JUMP_DURATION = 420;
 const presetOptions = {
   lunch: "大汗 小陳 五路 鐵板燒(左) 鐵板燒(右) 牛脾氣 無人拉麵 好甲 歐姆 泰國象 墨竹亭 牛肉麵 阿山哥 壹參 ㄐㄐ",
   dinner: "大汗 小陳 五路 鐵板燒(左) 鐵板燒(右) 牛脾氣 無人拉麵 好甲 歐姆 泰國象 墨竹亭 牛肉麵 ㄐㄐ"
@@ -41,6 +43,52 @@ function getSelectedIndex(degrees, itemCount) {
   const normalized = normalizeDegrees(degrees + 90);
   const segment = 360 / itemCount;
   return Math.floor(normalized / segment) % itemCount;
+}
+
+function getAngleForIndex(index, itemCount) {
+  const segment = 360 / itemCount;
+  return -90 + index * segment + segment / 2;
+}
+
+function getForwardDistanceToAngle(fromAngle, targetAngle, extraRounds = 0) {
+  return normalizeDegrees(targetAngle - normalizeDegrees(fromAngle)) + extraRounds * 360;
+}
+
+function easeOutCubic(progress) {
+  return 1 - Math.pow(1 - progress, 3);
+}
+
+function easeInOutCubic(progress) {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function startQuickJump() {
+  if (options.length < 2 || Math.random() >= STOP_JUMP_CHANCE) {
+    finishSpin();
+    return;
+  }
+
+  const currentIndex = getSelectedIndex(angle, options.length);
+  let targetIndex = Math.floor(Math.random() * (options.length - 1));
+
+  if (targetIndex >= currentIndex) {
+    targetIndex += 1;
+  }
+
+  const targetAngle = getAngleForIndex(targetIndex, options.length);
+  const forwardDistance = getForwardDistanceToAngle(angle, targetAngle);
+
+  mode = "jumping";
+  stopAnimation = {
+    startTime: null,
+    startAngle: angle,
+    targetAngle: angle + forwardDistance,
+    duration: QUICK_JUMP_DURATION,
+    easing: easeInOutCubic,
+    onComplete: finishSpin
+  };
 }
 
 function drawWheel() {
@@ -120,15 +168,36 @@ function animate(timestamp) {
     angle += delta * POINTER_SPEED;
     positionPointer(angle);
   } else if (mode === "stopping" && stopAnimation) {
-    stopAnimation.remainingDistance -= delta * POINTER_SPEED;
-    angle += delta * POINTER_SPEED;
+    if (!stopAnimation.startTime) {
+      stopAnimation.startTime = timestamp;
+    }
 
-    if (stopAnimation.remainingDistance <= 0) {
+    const progress = Math.min((timestamp - stopAnimation.startTime) / stopAnimation.duration, 1);
+    const easedProgress = stopAnimation.easing(progress);
+
+    angle = stopAnimation.startAngle + (stopAnimation.targetAngle - stopAnimation.startAngle) * easedProgress;
+    positionPointer(angle);
+
+    if (progress >= 1) {
       angle = stopAnimation.targetAngle;
       positionPointer(angle);
-      finishSpin();
-    } else {
+      stopAnimation.onComplete();
+    }
+  } else if (mode === "jumping" && stopAnimation) {
+    if (!stopAnimation.startTime) {
+      stopAnimation.startTime = timestamp;
+    }
+
+    const progress = Math.min((timestamp - stopAnimation.startTime) / stopAnimation.duration, 1);
+    const easedProgress = stopAnimation.easing(progress);
+
+    angle = stopAnimation.startAngle + (stopAnimation.targetAngle - stopAnimation.startAngle) * easedProgress;
+    positionPointer(angle);
+
+    if (progress >= 1) {
+      angle = stopAnimation.targetAngle;
       positionPointer(angle);
+      stopAnimation.onComplete();
     }
   }
 
@@ -147,17 +216,19 @@ function startSpin() {
 function stopSpin() {
   options = parseOptions();
   const targetIndex = Math.floor(Math.random() * options.length);
-  const segment = 360 / options.length;
-  const targetAngle = -90 + targetIndex * segment + segment / 2;
-  const current = normalizeDegrees(angle);
-  const extraRounds = Math.floor(Math.random() * 3) + 1;
-  const forwardDistance = normalizeDegrees(targetAngle - current) + extraRounds * 360;
+  const targetAngle = getAngleForIndex(targetIndex, options.length);
+  const extraRounds = Math.floor(Math.random() * 3) + 4;
+  const forwardDistance = getForwardDistanceToAngle(angle, targetAngle, extraRounds);
 
   mode = "stopping";
   spinButton.disabled = true;
   stopAnimation = {
+    startTime: null,
+    startAngle: angle,
     targetAngle: angle + forwardDistance,
-    remainingDistance: forwardDistance
+    duration: (forwardDistance * 3) / POINTER_SPEED,
+    easing: easeOutCubic,
+    onComplete: startQuickJump
   };
 }
 
