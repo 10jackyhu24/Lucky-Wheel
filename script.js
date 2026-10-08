@@ -20,7 +20,7 @@ const POINTER_SPEED = 0.7;
 const STOP_JUMP_CHANCE = 0.35;
 const QUICK_JUMP_DURATION = 420;
 const presetOptions = {
-  lunch: "大汗 小陳 五路 鐵板燒(左) 鐵板燒(右) 牛脾氣 好甲 歐姆 安東尼 泰國象 墨竹亭 牛肉麵 阿山哥 KFC 禾品屋 壹參 歐浮 雞肉本家 Costco ㄐㄐ",
+  lunch: "大汗 小陳 五路 鐵板燒(左) 鐵板燒(右) 牛脾氣 好甲 歐姆 安東尼 磚塊 泰國象 墨竹亭 牛肉麵 阿山哥 KFC 老麥 禾品屋 輔園 理園 心園 壹參 歐浮 巧主廚 麵屋三郎 Costco ㄐㄐ",
   dinner: "大汗 小陳 五路 鐵板燒(左) 鐵板燒(右) 牛脾氣 好甲 歐姆 安東尼 泰國象 墨竹亭 牛肉麵 阿山哥 ㄐㄐ"
 };
 
